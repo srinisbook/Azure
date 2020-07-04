@@ -1,0 +1,47 @@
+{
+    "variables": {
+        "SubscriptionID": "",
+        "ResourceGroup": "",
+        "ImageName": "",
+        "SSH_Username": "",
+        "SSH_Password": ""
+    },
+    "builders": [
+      {
+        "type": "azure-arm",
+        "subscription_id": "{{user `SubscriptionID`}}",
+        
+        "managed_image_resource_group_name": "{{user `ResourceGroup`}}",
+        "managed_image_name": "{{user `ImageName`}}",
+
+        "ssh_username": "{{user `SSH_Username`}}",
+        "ssh_password": "{{user `SSH_Password`}}",
+
+        "os_type": "Linux",
+        "vm_size": "Standard_DS2_v2",
+        "image_publisher": "Canonical",
+        "image_offer": "UbuntuServer",
+        "image_sku": "16.04-LTS",
+
+        "location": "West Europe"
+
+      }
+    ],
+    "provisioners": [
+      {
+        "execute_command": "echo '{{user `SSH_Password`}}' | {{ .Vars }} sudo -S -E sh '{{ .Path }}'",
+        "inline": [
+          "sudo apt-get update -y",
+          "sudo apt-get install -y git",
+          "sudo apt-get install -y nodejs",
+          "sudo apt-get install -y npm",
+          "sudo npm install azure-cli -g",
+          "sudo apt-get remove docker docker-engine docker.io -y",
+          "sudo apt install docker.io -y",
+          "/usr/sbin/waagent -force -deprovision+user && export HISTSIZE=0 && sync"
+        ],
+        "inline_shebang": "/bin/sh -x",
+        "type": "shell"
+      }
+    ]
+  }
