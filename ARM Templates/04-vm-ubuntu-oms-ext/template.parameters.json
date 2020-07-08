@@ -1,0 +1,47 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "value": "eastus"
+        },
+        "virtualMachineName": {
+           "value": "VM-Ubuntu-18" 
+        },
+        "virtualMachineSize": {
+            "value": "Standard_DS1_v2"
+        },
+        "virtualMachineImageSku": {
+            "value": "18.04-LTS"
+        },
+        "virtualMachineUserName": {
+            "value": "vmadmin"
+        },
+        "virtualMachinePassword": {
+            "value": "Admin12!@Pa$$word"
+        },
+        "virtualMachineDiskSize": {
+            "value": 30
+        },
+        "virtualNetworkName": {
+            "value": "VNET-SB-TEST"
+        },
+        "networkAddressPrefix": {
+            "value": "10.100.40.0/22"
+        },
+        "subnetName": {
+            "value": "SUB-SB-TEST-VMs"
+        },
+        "subnetAddressPrefix": {
+            "value": "10.100.40.0/28"
+        },
+        "workspaceName": {
+            "value": "Workspace-SB-Test"
+        },
+        "tags": {
+            "value": {
+                "Environment" : "POC"
+            }
+        }
+    }
+}

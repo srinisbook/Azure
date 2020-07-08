@@ -1,0 +1,295 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "type": "string",
+            "metadata": {
+                "description": "Azure location where the virtual machine should be created."
+            }
+        },
+        "virtualMachineName": {
+            "type": "string",
+            "metadata": {
+                "description": "Specify name of the virtual machine."
+            }
+        },
+        "virtualMachineSize": {
+            "type": "String",
+            "metadata": {
+                "description": "Specify size of the virtual machine."
+            }
+        },
+        "virtualMachineImageSku": {
+            "type": "string",
+            "metadata": {
+                "description": "Specify virtual machine image SKU."
+            }
+        },
+        "virtualMachineUserName": {
+            "type": "String",
+            "metadata": {
+                "description": "Specify admin username of the virtual machine."
+            }
+        },
+        "virtualMachinePassword": {
+            "type": "securestring",
+            "metadata": {
+                "description": "Specify password for virtual machine admin user."
+            }
+        },
+        "virtualMachineDiskSize": {
+            "type": "int",
+            "metadata": {
+                "description": "Specify OS disk size in GB."
+            }
+        },
+        "osDiskType": {
+            "type": "string",
+            "defaultValue": "Premium_LRS",
+            "metadata": {
+                "description": "Storage account type for the managed disk."
+            },
+            "allowedValues": [ "Basic_LRS", "Standard_LRS", "Premium_LRS" ]
+        },
+        "virtualNetworkName": {
+            "type": "string",
+            "metadata": {
+                "description" : "Specify name of the virtual network."
+            }
+        },
+        "networkAddressPrefix": {
+            "type": "string",
+            "metadata": {
+                "description": "Specify IP adrress block reserved for this virtual network in CIDR notation."
+            }
+        },
+        "subnetName": {
+            "type": "string",
+            "metadata": {
+                "description" : "Specify name of the subnet in the virtual network"
+            }
+        },
+        "subnetAddressPrefix": {
+            "type": "string",
+            "metadata": {
+                "description" : "Specify name of the subnet in the virtual network"
+            }
+        },
+        "publicIpAddressType": {
+            "type": "string",
+            "defaultValue": "Dynamic",
+            "allowedValues": [ "Static ", "Dynamic" ],
+            "metadata": {
+                "description": "Specify public IP address allocation method."
+            }
+        },
+        "workspaceName": {
+            "type": "string",
+            "metadata": {
+                "description": "Specify name of the Log analytics workspace."
+            }
+        },
+        "tags" : {
+            "type": "object",
+            "metadata" : {
+                "description" : "Tags for the virtual machine."
+            }
+        }
+    },
+    "variables": {
+        
+        "location": "[if(empty(parameters('location')),resourceGroup().location,parameters('location'))]",
+        
+        "networkInterfaceName": "[concat('NIC-',parameters('virtualMachineName'))]",
+        "networkSecurityGroupName": "[concat( 'NSG-', parameters('virtualMachineName'))]",
+        "publicIpAddressName": "[concat( parameters('virtualMachineName'), '-IP')]",
+        
+        "nsgRef": "[resourceId(resourceGroup().name, 'Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]",
+        "vnetRef":"[resourceId(resourceGroup().name, 'Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]",
+        "subnetRef": "[concat(variables('vnetRef'), '/subnets/', parameters('subnetName'))]",
+        "publicIPRef": "[resourceId(resourceGroup().name, 'Microsoft.Network/publicIpAddresses', variables('publicIpAddressName'))]",
+        "nicRef": "[resourceId('Microsoft.Network/networkInterfaces', variables('networkInterfaceName'))]",
+        "workspaceRef": "[resourceId(resourceGroup().name, 'Microsoft.OperationalInsights/workspaces', parameters('workspaceName'))]"
+    },
+    "resources": [
+        {
+            "apiVersion": "2020-03-01-preview",
+            "name": "[parameters('workspaceName')]",
+            "location": "[variables('location')]",
+            "tags": "[parameters('tags')]",
+            "type": "Microsoft.OperationalInsights/workspaces",
+            "properties": {
+                "sku": {
+                    "name": "pergb2018"
+                }
+            }
+        },
+        {
+            "name": "[variables('networkSecurityGroupName')]",
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "apiVersion": "2019-02-01",
+            "location": "[variables('location')]",
+            "tags": "[parameters('tags')]",
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "SSH",
+                        "properties": {
+                            "priority": 100,
+                            "protocol": "TCP",
+                            "access": "Allow",
+                            "direction": "Inbound",
+                            "sourceAddressPrefix": "*",
+                            "sourcePortRange": "*",
+                            "destinationAddressPrefix": "*",
+                            "destinationPortRange": "22"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "name": "[variables('publicIpAddressName')]",
+            "type": "Microsoft.Network/publicIpAddresses",
+            "apiVersion": "2019-02-01",
+            "location": "[variables('location')]",
+            "tags": "[parameters('tags')]",
+            "properties": {
+                "publicIpAllocationMethod": "[parameters('publicIpAddressType')]"
+            },
+            "sku": {
+                "name": "Basic"
+            }
+        },
+        {
+            "type": "Microsoft.Network/virtualNetworks",
+            "apiVersion": "2019-12-01",
+            "name": "[parameters('virtualNetworkName')]",
+            "location": "[variables('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+            ],
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "[parameters('networkAddressPrefix')]"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "name": "[parameters('subnetName')]",
+                        "properties": {
+                            "addressPrefix": "[parameters('subnetAddressPrefix')]",
+                            "networkSecurityGroup": {
+                                "id": "[variables('nsgRef')]"
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "name": "[variables('networkInterfaceName')]",
+            "type": "Microsoft.Network/networkInterfaces",
+            "apiVersion": "2019-07-01",
+            "location": "[variables('location')]",
+            "tags": "[parameters('tags')]",
+            "dependsOn": [
+                "[concat('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]",
+                "[concat('Microsoft.Network/publicIpAddresses/', variables('publicIpAddressName'))]"
+            ],
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "primary": true,
+                            "privateIPAllocationMethod": "Dynamic",
+                            "publicIpAddress": {
+                                "id": "[variables('publicIPRef')]"
+                            },
+                            "subnet": {
+                                "id": "[variables('subnetRef')]"
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "name": "[parameters('virtualMachineName')]",
+            "type": "Microsoft.Compute/virtualMachines",
+            "apiVersion": "2019-07-01",
+            "location": "[variables('location')]",
+            "tags": "[parameters('tags')]",
+            "dependsOn": [
+                "[concat('Microsoft.Network/networkInterfaces/', variables('networkInterfaceName'))]",
+                "[concat('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]",
+                "[concat('Microsoft.OperationalInsights/workspaces/', parameters('workspaceName'))]"
+            ],
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "[parameters('virtualMachineSize')]"
+                },
+                "storageProfile": {
+                    "osDisk": {
+                        "osType": "Linux",
+                        "name": "[concat(parameters('virtualMachineName'), '_OsDisk')]",
+                        "createOption": "fromImage",
+                        "caching": "ReadWrite",
+                        "managedDisk": {
+                            "storageAccountType": "[parameters('osDiskType')]"
+                        },
+                        "diskSizeGB": "[parameters('virtualMachineDiskSize')]"
+                    },
+                    "imageReference": {
+                        "publisher": "Canonical",
+                        "offer": "UbuntuServer",
+                        "sku": "[parameters('virtualMachineImageSku')]",
+                        "version": "latest"
+                    }
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[variables('nicRef')]"
+                        }
+                    ]
+                },
+                "osProfile": {
+                    "computerName": "[parameters('virtualMachineName')]",
+                    "adminUsername": "[parameters('virtualMachineUserName')]",
+                    "adminPassword": "[parameters('virtualMachinePassword')]",
+                     "linuxConfiguration": {
+                        "disablePasswordAuthentication": false,
+                        "provisionVMAgent": true
+                    }
+                }
+            },
+            "resources": [
+                {
+                    "type": "Extensions",
+                    "name": "OMSExtension",
+                    "apiVersion": "2018-06-01",
+                    "location": "[variables('location')]",
+                    "dependsOn": [
+                        "[concat('Microsoft.Compute/virtualMachines/', parameters('virtualMachineName'))]"
+                    ],
+                    "properties": {
+                        "publisher": "Microsoft.EnterpriseCloud.Monitoring",
+                        "type": "OmsAgentForLinux",
+                        "typeHandlerVersion": "1.13",
+                        "autoUpgradeMinorVersion": true,
+                        "settings": {
+                            "workspaceId": "[reference(variables('workspaceRef')).customerId]"
+                        },
+                        "protectedSettings": {
+                            "workspaceKey": "[listKeys(variables('workspaceRef'),'2020-03-01-preview').primarySharedKey]"
+                        }
+                    }
+                }
+            ]
+        }
+    ]
+}

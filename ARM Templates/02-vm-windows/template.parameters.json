@@ -1,0 +1,44 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "value": "eastus"
+        },
+        "virtualMachineName": {
+           "value": "VM-Windows-10" 
+        },
+        "virtualMachineSize": {
+            "value": "Standard_DS1_v2"
+        },
+        "virtualMachineImageSku": {
+            "value": "rs5-pro"
+        },
+        "virtualMachineUserName": {
+            "value": "vmadmin"
+        },
+        "virtualMachinePassword": {
+            "value": "Admin12!@Pa$$word"
+        },
+        "virtualMachineDiskSize": {
+            "value": 128
+        },
+        "virtualNetworkName": {
+            "value": "VNET-SB-TEST"
+        },
+        "networkAddressPrefix": {
+            "value": "10.100.40.0/22"
+        },
+        "subnetName": {
+            "value": "SUB-SB-TEST-VMs"
+        },
+        "subnetAddressPrefix": {
+            "value": "10.100.40.0/28"
+        },
+        "tags": {
+            "value": {
+                "Environment" : "POC"
+            }
+        }
+    }
+}
