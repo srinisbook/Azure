@@ -265,7 +265,7 @@
                             "skipDos2Unix":false
                         },
                         "protectedSettings": {
-                            "fileUris": ["https://raw.githubusercontent.com/srinisbook/Azure/master/ARM%20Templates/20-vm-custom-script-linux/script.sh"],
+                            "fileUris": ["https://raw.githubusercontent.com/srinisbook/Azure/master/ARMTemplates/20-vm-custom-script-linux/script.sh"],
                             "commandToExecute": "sh script.sh"
                         }
                     }
