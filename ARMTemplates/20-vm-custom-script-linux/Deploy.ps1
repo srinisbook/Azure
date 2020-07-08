@@ -36,7 +36,7 @@ if ($ValidateOnly) {
 
 else {
     
-    $DeploymentName = "Create-Ubuntu-VM-OMS-" +(Get-Date).ToString("yyyy-MM-dd-HHmm")
+    $DeploymentName = "Create-Ubuntu-VM-CustomScript-" +(Get-Date).ToString("yyyy-MM-dd-HHmm")
     New-AzResourceGroupDeployment   -Name $DeploymentName `
                                     -ResourceGroupName $ResourceGroupName `
                                     -TemplateFile $TemplateFile `
