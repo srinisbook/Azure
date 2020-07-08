@@ -1,3 +1,4 @@
+#!/bin/bash
 apt-get update
 apt-get remove docker docker-engine docker.io containerd runc -y
 apt-get install apt-transport-https ca-certificates curl gnupg-agent  software-properties-common -y
